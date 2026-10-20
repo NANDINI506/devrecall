@@ -15,8 +15,10 @@ const limiter = (minutes, limit, message) =>
 const authLimiter = limiter(15, 30, "Too many attempts. Please try again in a few minutes.");
 const aiLimiter = limiter(10, 40, "You are using AI too quickly. Please wait a few minutes.");
 
-// Auth
+// Auth & Email OTP Verification
 router.post("/auth/signup", authLimiter, auth.signup);
+router.post("/auth/verify-otp", authLimiter, auth.verifyOtp);
+router.post("/auth/resend-otp", authLimiter, auth.resendOtp);
 router.post("/auth/login", authLimiter, auth.login);
 router.get("/auth/me", protect, auth.me);
 

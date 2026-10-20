@@ -4,7 +4,8 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, select: false }, // stored as a bcrypt hash, hidden by default
+    password: { type: String, required: true, select: false },
+    isVerified: { type: Boolean, default: true },
     streak: {
       current: { type: Number, default: 0 },
       longest: { type: Number, default: 0 },

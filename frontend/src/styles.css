@@ -152,6 +152,37 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 .auth-card > .muted { margin-bottom: 22px; }
 .auth-card .btn-block { margin-top: 6px; padding: 12px; }
 .switch { text-align: center; margin-top: 18px; font-size: 14px; }
+.alert-success { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 10px; font-size: 14px; margin: 12px 0; }
+
+/* OTP Verification Styles */
+.otp-card { text-align: center; }
+.otp-icon-wrap {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--accent-dim); color: var(--accent-text);
+  display: grid; place-items: center; margin: 0 auto 18px;
+}
+.otp-icon { color: var(--accent-text); }
+.otp-row {
+  display: flex; gap: 10px; justify-content: center; margin: 16px 0;
+}
+.otp-digit-input {
+  width: 48px; height: 58px; text-align: center; font-size: 22px;
+  font-weight: 700; font-family: "JetBrains Mono", monospace;
+  background: var(--soft); border: 2px solid var(--border);
+  border-radius: 10px; color: var(--text); transition: border-color .15s;
+  caret-color: var(--accent);
+}
+.otp-digit-input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.18);
+}
+.otp-digit-input:not(:placeholder-shown) {
+  border-color: var(--accent-text);
+}
+.otp-resend-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin: 14px 0 4px; flex-wrap: wrap;
+}
 
 /* ===== Dashboard ===== */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }

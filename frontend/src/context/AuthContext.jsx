@@ -44,9 +44,11 @@ export function AuthProvider({ children }) {
     setUser(user);
   };
   const login = async (email, password) => authenticate((await api.post("/auth/login", { email, password })).data);
-  const signup = async (form) => authenticate((await api.post("/auth/signup", form)).data);
+  const signup = async (form) => (await api.post("/auth/signup", form)).data;
+  const verifyOtp = async (email, otp) => authenticate((await api.post("/auth/verify-otp", { email, otp })).data);
+  const resendOtp = async (email) => (await api.post("/auth/resend-otp", { email })).data;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, resendOtp, logout, refreshUser }}>{children}</AuthContext.Provider>
   );
 }
