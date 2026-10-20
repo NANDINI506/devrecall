@@ -60,7 +60,36 @@ async function sendVerificationOtpEmail({ toEmail, name, otp }) {
   const html = buildEmailHtml({ name, otp });
   const subject = `Your DevRecall Verification Code: ${otp}`;
 
-  // 1. Try Brevo API (HTTP Port 443 - Works on Railway Free/Hobby without port blocking)
+  // 1. Try Resend API (HTTP Port 443 - Instant 1s delivery, no review delay)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "DevRecall <onboarding@resend.dev>",
+          to: [toEmail],
+          subject,
+          html,
+        }),
+      });
+
+      if (resp.ok) {
+        console.log(`✉️ [Resend API] Verification OTP email sent to ${toEmail}`);
+        return { sent: true };
+      } else {
+        const errJson = await resp.text();
+        console.warn("⚠️ Resend send failed:", errJson);
+      }
+    } catch (err) {
+      console.warn("⚠️ Resend fetch error:", err.message);
+    }
+  }
+
+  // 2. Try Brevo API (HTTP Port 443)
   if (process.env.BREVO_API_KEY) {
     try {
       const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -90,35 +119,6 @@ async function sendVerificationOtpEmail({ toEmail, name, otp }) {
       }
     } catch (err) {
       console.warn("⚠️ Brevo fetch error:", err.message);
-    }
-  }
-
-  // 2. Try Resend API (HTTP Port 443)
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const resp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY.trim()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "DevRecall <onboarding@resend.dev>",
-          to: [toEmail],
-          subject,
-          html,
-        }),
-      });
-
-      if (resp.ok) {
-        console.log(`✉️ [Resend API] Verification OTP email sent to ${toEmail}`);
-        return { sent: true };
-      } else {
-        const errJson = await resp.text();
-        console.warn("⚠️ Resend send failed:", errJson);
-      }
-    } catch (err) {
-      console.warn("⚠️ Resend fetch error:", err.message);
     }
   }
 
