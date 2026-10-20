@@ -5,17 +5,18 @@ let transporter = null;
 function getTransporter() {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = Number(process.env.SMTP_PORT) || 465;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = (process.env.SMTP_USER || "").trim();
+  const rawPass = process.env.SMTP_PASS || "";
+  const pass = rawPass.replace(/\s+/g, "").trim();
 
   if (user && pass) {
     transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
+      service: "gmail",
       auth: { user, pass },
+      pool: true,
+      connectionTimeout: 8000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
   return transporter;
