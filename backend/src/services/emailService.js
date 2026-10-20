@@ -14,18 +14,16 @@ function getTransporter() {
       service: "gmail",
       auth: { user, pass },
       pool: true,
-      connectionTimeout: 8000,
-      greetingTimeout: 5000,
-      socketTimeout: 10000,
+      connectionTimeout: 5000,
+      greetingTimeout: 4000,
+      socketTimeout: 8000,
     });
   }
   return transporter;
 }
 
-async function sendVerificationOtpEmail({ toEmail, name, otp }) {
-  const mailer = getTransporter();
-
-  const html = `
+function buildEmailHtml({ name, otp }) {
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -56,23 +54,92 @@ async function sendVerificationOtpEmail({ toEmail, name, otp }) {
     </body>
     </html>
   `;
+}
 
+async function sendVerificationOtpEmail({ toEmail, name, otp }) {
+  const html = buildEmailHtml({ name, otp });
+  const subject = `Your DevRecall Verification Code: ${otp}`;
+
+  // 1. Try Brevo API (HTTP Port 443 - Works on Railway Free/Hobby without port blocking)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "api-key": process.env.BREVO_API_KEY.trim(),
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "DevRecall",
+            email: process.env.SMTP_USER || "nandinianil1352@gmail.com",
+          },
+          to: [{ email: toEmail, name: name || "Developer" }],
+          subject,
+          htmlContent: html,
+        }),
+      });
+
+      if (resp.ok) {
+        console.log(`✉️ [Brevo API] Verification OTP email sent to ${toEmail}`);
+        return { sent: true };
+      } else {
+        const errJson = await resp.text();
+        console.warn("⚠️ Brevo send failed:", errJson);
+      }
+    } catch (err) {
+      console.warn("⚠️ Brevo fetch error:", err.message);
+    }
+  }
+
+  // 2. Try Resend API (HTTP Port 443)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "DevRecall <onboarding@resend.dev>",
+          to: [toEmail],
+          subject,
+          html,
+        }),
+      });
+
+      if (resp.ok) {
+        console.log(`✉️ [Resend API] Verification OTP email sent to ${toEmail}`);
+        return { sent: true };
+      } else {
+        const errJson = await resp.text();
+        console.warn("⚠️ Resend send failed:", errJson);
+      }
+    } catch (err) {
+      console.warn("⚠️ Resend fetch error:", err.message);
+    }
+  }
+
+  // 3. Try Standard SMTP (Works locally or Railway Pro)
+  const mailer = getTransporter();
   if (mailer) {
     try {
       await mailer.sendMail({
         from: `"DevRecall" <${process.env.SMTP_USER}>`,
         to: toEmail,
-        subject: `Your DevRecall Verification Code: ${otp}`,
+        subject,
         html,
       });
-      console.log(`✉️ Verification OTP email sent to ${toEmail}`);
+      console.log(`✉️ [SMTP] Verification OTP email sent to ${toEmail}`);
       return { sent: true };
     } catch (err) {
       console.warn("⚠️ SMTP send failed, falling back to console log:", err.message);
     }
   }
 
-  // Fallback / Dev mode: log clearly in server console
+  // 4. Fallback / Dev mode: log clearly in server console
   console.log(`\n======================================================`);
   console.log(`📨 [DEVRECALL OTP VERIFICATION]`);
   console.log(`   To:   ${toEmail} (${name})`);
